@@ -1,19 +1,22 @@
 // src/App.jsx
 import React from 'react';
-import { GROUP_CHAT_ID } from './context/NostrContext';
-import { HashRouter as Router, Routes, Route } from 'react-router-dom'; // Import Router components
+import { HashRouter as Router, Routes, Route } from 'react-router-dom';
+import { HelmetProvider } from 'react-helmet-async'; 
 
-import GroupChat from './components/GroupChat';
-import PetLogbookPage from './pages/PetLogbookPage'; // New import
+import FeedbackPage from './pages/FeedbackPage';
+import PetLogbookPage from './pages/PetLogbookPage'; 
 import HomePage from './pages/HomePage';
 import RegistryPage from './pages/RegistryPage';
 
-import Navbar from './components/Navbar'; // Import the Navbar component
+import Navbar from './components/Navbar'; 
 
 
 
 function App() {
+    const helmetContext = {};
+
     return (
+        <HelmetProvider context={helmetContext}>
         <Router>
             <Navbar />
             <div className="min-h-screen bg-gray-950 flex flex-col items-center py-8 px-4">
@@ -23,10 +26,11 @@ function App() {
                     <Route path="/my-pets" element={<RegistryPage />} />
 
                     <Route path="/pet/:petId" element={<PetLogbookPage />} />
-                    <Route path="/group-channel" element={<GroupChat channelId={GROUP_CHAT_ID} />} />
+                    <Route path="/group-channel" element={<FeedbackPage />} />
                 </Routes>
             </div>
         </Router>
+        </HelmetProvider>
     );
 }
 

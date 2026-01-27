@@ -1,6 +1,9 @@
 // src/pages/PetLogbookPage.jsx
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async'; 
+import { usePageTitle } from '../hooks/usePageTitle';
+
 import { useNostr, APP_NAME, GROUP_CHAT_ID } from '../context/NostrContext';
 import { DocumentTextIcon, CalendarDaysIcon, PlusCircleIcon } from '@heroicons/react/24/outline'; // Adding icons
 
@@ -22,7 +25,6 @@ function PetLogbookPage() {
     const [dewormingNotes, setDewormingNotes] = useState('');
 
     const [statusMessage, setStatusMessage] = useState(''); // New state for status/alerts
-
     // --- Fetch Pet Profile ---
     useEffect(() => {
         if (!petId) return;
@@ -158,8 +160,14 @@ function PetLogbookPage() {
     }, [publicKey, petId, dewormingDate, dewormingType, dewormingNotes, publishEvent]);
 
     if (!petProfile) {
+        usePageTitle('Loading Pet Logbook...')
+
         return (
             <div className="min-h-screen bg-gray-950 flex flex-col items-center py-8 px-4 text-gray-300"> {/* Dark background, light text */}
+                <Helmet>
+                    <title>Loading Pet Logbook...</title>
+                    <meta name="description" content="Loading pet's health logbook details." />
+                </Helmet>
                 <div className="bg-gray-900 p-8 rounded-lg border border-gray-700 w-full max-w-3xl text-center">
                     Loading pet profile or pet not found...
                     <Link to="/" className="text-purple-500 hover:underline block mt-4">← Go to Home</Link>
@@ -170,9 +178,18 @@ function PetLogbookPage() {
 
     // Determine if the current user is the pet owner
     const isOwner = publicKey && petProfile.ownerPubKey === publicKey;
+    usePageTitle(`${petProfile.name}'s Logbook - Nostr Pet Care`)
 
     return (
         <div className="min-h-screen w-full bg-gray-950 flex flex-col items-center py-8 px-4"> {/* Main page dark background */}
+            <Helmet>
+                <title>{petProfile.name}'s Logbook - Nostr Pet Care</title>
+                <meta name="description" content={`Health logbook for ${petProfile.name}, a ${petProfile.race} born on ${petProfile.birthday}. View vaccines, dewormings, and more.`} />
+                <meta property="og:title" content={`${petProfile.name}'s Logbook`} />
+                <meta property="og:description" content={`View ${petProfile.name}'s health records on Nostr Pet Care.`} />
+                {petProfile.image && <meta property="og:image" content={petProfile.image} />}
+                {/* Add other meta tags as needed */}
+            </Helmet>
             <div className="bg-gray-900 p-8 rounded-lg border border-gray-700 shadow-xl w-full max-w-3xl text-gray-100"> {/* Dark card for content */}
                 <Link to="/" className="text-purple-400 hover:text-purple-300 hover:underline mb-6 block w-fit text-sm flex items-center gap-1">
                     <DocumentTextIcon className="h-4 w-4" /> Back to All Pets

@@ -1,6 +1,8 @@
 // src/pages/RegistryPage.jsx
-import React, { useState } from 'react'; // Import useState
+import React, { useState } from 'react'; 
+import { Helmet } from 'react-helmet-async'; 
 import { useNostr } from '../context/NostrContext';
+import { usePageTitle } from '../hooks/usePageTitle';
 
 import AuthDisplay from '../components/AuthDisplay';
 import PetRegistrationForm from '../components/PetRegistrationForm';
@@ -12,8 +14,17 @@ function RegistryPage() {
     const { publicKey } = useNostr();
     // State to manage the active tab: 'myPets' or 'allPets'
     const [activeTab, setActiveTab] = useState('myPets'); // Default to 'myPets'
+    usePageTitle('NosPetRegistry - Register Your Pet')
     return (
         <div className="bg-gray-900 text-gray-100 p-8 rounded-lg w-full max-w-5xl mx-auto my-8 border border-gray-800"> {/* Added border to main container */}
+            <Helmet>
+                <title>NosPetRegistry - Register Your Pet</title>
+                <meta name="description" content="Decentralized pet registry on Nostr. Register your pets, manage their profiles, and explore all registered pets in the community." />
+                <meta property="og:title" content="NosPetRegistry: Decentralized Pet Registration" />
+                <meta property="og:description" content="Register your pets and view the community's pet registry powered by Nostr." />
+                {/* You could add an og:image here, perhaps a logo or an image of diverse pets */}
+            </Helmet>
+            
             <AuthDisplay />
 
             {publicKey && ( // Only show tab options if logged in
