@@ -12,6 +12,7 @@ import {
 // No TypeScript interface needed in plain JavaScript
 
 const NostrConnectInfo = ({ publicKey }) => { // Removed React.FC and interface
+    if(!publicKey) return;
     const [copiedField, setCopiedField] = useState(null);
 
     // Encode Public Key to npub format

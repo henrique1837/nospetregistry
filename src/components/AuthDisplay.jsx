@@ -10,23 +10,19 @@ import {
 } from '@heroicons/react/24/outline';
 
 function AuthDisplay() {
-    const { publicKey, privateKey, loginLocal, loginExtension, logout, isNip07Ready, loginMethod } = useNostr();
+    const { 
+        publicKey,
+        privateKey,
+        loginLocal,
+        loginExtension,
+        logout,
+        isNip07Ready,
+        loginMethod,
+        loginNostrLogin
+     } = useNostr();
     const [showLocalPrivateKey, setShowLocalPrivateKey] = useState(false); // State to toggle private key visibility
-    const [showNsecQr, setShowNsecQr] = useState(false); // State to toggle nsec QR code visibility
     const [copiedField, setCopiedField] = useState(null); // State for copy button feedback
-
-    // Encode the private key to nsec format, only for local login
-    const nsec = useMemo(() => {
-        if (loginMethod === 'local' && privateKey) {
-            try {
-                return nip19.nsecEncode(privateKey);
-            } catch (e) {
-                console.error("Error encoding private key:", e);
-                return '';
-            }
-        }
-        return '';
-    }, [loginMethod, privateKey]);
+    const [showNsecQr, setShowNsecQr] = useState(false); // State to toggle nsec QR code visibility
 
     const handleCopy = (text, field) => {
         navigator.clipboard.writeText(text);
@@ -49,7 +45,7 @@ function AuthDisplay() {
         }
         setShowNsecQr(!showNsecQr);
     };
-
+    const nsec = privateKey;
     if (!publicKey) {
         return (
             <div className="bg-gray-800 rounded-lg border border-gray-700 p-8 text-center mb-8">
@@ -59,25 +55,12 @@ function AuthDisplay() {
                 </h3>
                 <p className="text-gray-300 mb-6 font-medium">Choose your Nostr login method:</p>
                 <div className="flex flex-col space-y-4 mb-6">
-                    {isNip07Ready ? (
-                        <button
-                            onClick={() => loginExtension()}
-                            className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg transition duration-300 ease-in-out flex items-center justify-center gap-2 text-lg"
-                        >
-                            <PuzzlePieceIcon className="h-6 w-6" />
-                            Login with NIP-07 (Browser Extension)
-                        </button>
-                    ) : (
-                        <p className="text-sm text-gray-500 italic p-3 bg-gray-700 border border-gray-600 rounded-lg">
-                            <span className="font-semibold text-yellow-400">Warning:</span> NIP-07 extension not detected. Please install Alby or nos2x.
-                        </p>
-                    )}
                     <button
-                        onClick={() => loginLocal()}
+                        onClick={() => loginNostrLogin()}
                         className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg transition duration-300 ease-in-out flex items-center justify-center gap-2 text-lg"
                     >
                         <KeyIcon className="h-6 w-6" />
-                        Login with Local Key (Generate New)
+                        Login / SignUp
                     </button>
                 </div>
                 <p className="text-xs text-gray-400 mt-4 max-w-sm mx-auto p-3 bg-gray-700 border border-gray-600 rounded-lg">
@@ -95,8 +78,8 @@ function AuthDisplay() {
             <div className="flex flex-col md:flex-row justify-between items-center mb-6 border-b border-gray-700 pb-4 pt-4">
                 <p className="text-lg text-gray-100 mb-2 md:mb-0">
                     Logged in as: <span className="font-mono bg-gray-700 text-green-400 px-3 py-1 rounded-md text-sm break-all">{publicKey.substring(0, 10)}...</span>
-                    {loginMethod === 'nip07' && <span className="ml-2 bg-purple-900/50 text-purple-300 text-xs px-2 py-1 rounded-full border border-purple-800">NIP-07</span>}
-                    {loginMethod === 'local' && <span className="ml-2 bg-indigo-900/50 text-indigo-300 text-xs px-2 py-1 rounded-full border border-indigo-800">Local Key</span>}
+                    {!privateKey && <span className="ml-2 bg-purple-900/50 text-purple-300 text-xs px-2 py-1 rounded-full border border-purple-800">NIP-07</span>}
+                    {privateKey && <span className="ml-2 bg-indigo-900/50 text-indigo-300 text-xs px-2 py-1 rounded-full border border-indigo-800">Local Key</span>}
                 </p>
                 <button
                     onClick={logout}
@@ -107,7 +90,7 @@ function AuthDisplay() {
             </div>
 
             {/* --- Private Key Display for Local Login Method --- */}
-            {loginMethod === 'local' && (
+            {nsec && (
                 <div className="bg-red-900/20 border border-red-900/50 rounded-lg p-6 mb-8 mt-6 animate-fade-in-down">
                     <h4 className="text-xl font-bold text-red-300 mb-4 flex items-center gap-2">
                         <ExclamationTriangleIcon className="h-6 w-6 text-red-400"/>

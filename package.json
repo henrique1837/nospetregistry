@@ -12,6 +12,7 @@
   "dependencies": {
     "@heroicons/react": "^2.2.0",
     "@tailwindcss/vite": "^4.1.18",
+    "nostr-login": "^1.7.12",
     "nostr-tools": "^2.20.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",

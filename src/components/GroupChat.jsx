@@ -9,10 +9,6 @@ function GroupChat({ channelId }) {
     const [newMessage, setNewMessage] = useState('');
     const messagesEndRef = useRef(null); // Ref for auto-scrolling
 
-    // Auto-scroll to bottom of messages
-    const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    };
 
     useEffect(() => {
         if (!channelId) {
@@ -35,10 +31,6 @@ function GroupChat({ channelId }) {
         return;
     }, [channelId, subscribeToGroupChannel]); // publicKey is not directly used in the filter, so removed
 
-    // Scroll to bottom whenever messages update
-    useEffect(() => {
-        scrollToBottom();
-    }, [groupMessages]);
 
     const handleSendMessage = useCallback(async () => {
         if (newMessage.trim() && publicKey && channelId) {

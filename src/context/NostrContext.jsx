@@ -1,9 +1,9 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { SimplePool } from 'nostr-tools';
 import { generateSecretKey, getPublicKey, finalizeEvent, verifyEvent } from 'nostr-tools/pure';
+import { init as initNostrLogin, launch as launchNostrLoginDialog, logout as logoutNostrLogin } from 'nostr-login'; // Import nostr-login functions
 
-
-export const APP_NAME = "nospetregistry-v0"
+export const APP_NAME = "nospetregistry-v0";
 export const GROUP_CHAT_ID = "0cc9446260056b38d29bffff924e9b4a18af81f7d73749d8efd1b4b2d81271da";
 
 const NostrContext = createContext(null);
@@ -12,7 +12,9 @@ export const NostrProvider = ({ children }) => {
     const [pool, setPool] = useState(null);
     const [privateKey, setPrivateKey] = useState(null);
     const [publicKey, setPublicKey] = useState(null);
-    const [isNip07Ready, setIsNip07Ready] = useState(false);
+    // isNip07Ready becomes less critical as nostr-login manages window.nostr availability internally
+    // You might still keep it if you have other logic depending on raw NIP-07 extension presence.
+    const [isNip07Ready, setIsNip07Ready] = useState(false); // Can potentially be removed or managed differently
     const [loginMethod, setLoginMethod] = useState(null);
     const [relays, setRelays] = useState([
         'wss://relay.damus.io',
@@ -21,77 +23,82 @@ export const NostrProvider = ({ children }) => {
         'wss://relay.snort.social'
     ]);
 
-    const nip07CheckIntervalRef = useRef(null);
-    const initialNip07CheckTimeoutRef = useRef(null); // New ref for the initial timeout
-
+    // Refactored useEffect for pool initialization and nostr-login setup
     useEffect(() => {
         const newPool = new SimplePool();
         setPool(newPool);
 
         if (typeof window !== 'undefined') {
-            const checkNip07 = () => {
-                if (window.nostr) {
-                    setIsNip07Ready(true);
-                    if (nip07CheckIntervalRef.current) {
-                        clearInterval(nip07CheckIntervalRef.current);
-                        nip07CheckIntervalRef.current = null; // Clear ref after clearing interval
+            // Initialize nostr-login
+            initNostrLogin({
+                // You can pass options here, e.g., for theme, bunkers, etc.
+                // These correspond to the data- attributes in the script tag documentation.
+                // For example:
+                // theme: 'ocean',
+                // bunkers: 'nsec.app,highlighter.com',
+                // perms: 'sign_event:1'
+            });
+
+            // Listen for nostr-login authentication events
+            const handleAuth = (e) => {
+                console.log(e)
+                if (e.detail.type === 'login') {
+                    // When nostr-login successfully logs in, it populates window.nostr
+                    // We can then get the public key from there.
+                    if (window.nostr) {
+                        window.nostr.getPublicKey().then(pubkey => {
+                            setPublicKey(pubkey);
+                            setPrivateKey(null); // nostr-login handles the private key securely
+                            setLoginMethod('nostr-login'); // Indicate login via nostr-login
+                            setIsNip07Ready(true); // Since window.nostr is now effectively "ready"
+                            console.log("Logged in via nostr-login with Public Key:", pubkey);
+                        }).catch(err => {
+                            console.error("Failed to get public key after nostr-login success:", err);
+                            setPublicKey(null);
+                        });
                     }
-                    if (initialNip07CheckTimeoutRef.current) {
-                        clearTimeout(initialNip07CheckTimeoutRef.current);
-                        initialNip07CheckTimeoutRef.current = null; // Clear ref after clearing timeout
-                    }
-                    console.log("NIP-07 extension detected and ready.");
-                } else {
-                    // console.log("Polling for window.nostr...");
+                }  else if(e.detail.type === 'signup'){
+                    alert(e.detail.localNsec)
+                    const pubkey = e.detail.pubkey;
+                    const nsec = e.detail.localNsec;
+                    setPublicKey(pubkey);
+                    setPrivateKey(nsec);
+                    setLoginMethod('nostr-login');
+
+                } else if (e.detail.type === 'logout') {
+                    // Handle logout initiated by nostr-login UI
+                    //document.dispatchEvent(new Event("nlLogout"));
                 }
             };
 
-            // Start checking after a short delay to give extensions time to inject
-            initialNip07CheckTimeoutRef.current = setTimeout(() => { // Store timeout ID in ref
-                checkNip07(); // Check immediately after timeout
-                // If not found, start polling
-                if (!isNip07Ready && !nip07CheckIntervalRef.current) {
-                    nip07CheckIntervalRef.current = setInterval(checkNip07, 200);
-                }
-            }, 500);
+            document.addEventListener('nlAuth', handleAuth);
+
+            // You might still want a basic check if an extension is present initially for UI hints
+            // but nostr-login will manage the actual window.nostr provider.
+            // Simplified NIP-07 check (less critical now)
+            if (window.nostr) {
+                setIsNip07Ready(true);
+            }
+
 
         } else {
-            console.log("NostrContext: Not in browser, skipping NIP-07 detection.");
+            console.log("NostrContext: Not in browser, skipping nostr-login initialization.");
         }
 
-        return () => {
-            newPool.close([]);
-            if (nip07CheckIntervalRef.current) {
-                clearInterval(nip07CheckIntervalRef.current);
-            }
-            if (initialNip07CheckTimeoutRef.current) { // Correctly clear the initial timeout
-                clearTimeout(initialNip07CheckTimeoutRef.current);
-            }
-        };
-    }, [isNip07Ready]); // isNip07Ready needs to be a dependency here for the `if (!isNip07Ready)` check in the timeout.
+        return;
+    }, []); // Empty dependency array to run once on mount
 
-    const loginExtension = useCallback(async () => {
-        setLoginMethod('nip07');
-        if (typeof window === 'undefined' || !window.nostr || !isNip07Ready) {
-            console.error("NIP-07 login attempt: window.nostr not available or extension not ready.");
-            setPublicKey(null);
-            setLoginMethod(null);
-            return;
-        }
-        try {
-            const pubkey = await window.nostr.getPublicKey();
-            setPublicKey(pubkey);
-            setPrivateKey(null);
-            console.log("Logged in with NIP-07 Public Key:", pubkey);
-        } catch (error) {
-            console.error("NIP-07 login failed:", error);
-            if (error instanceof Error && error.message.includes("denied")) {
-                alert("NIP-07 request denied by your extension. Please approve the request in your browser extension popup.");
-            }
-            setPublicKey(null);
-            setLoginMethod(null);
-        }
-    }, [isNip07Ready]);
+    // Removed the previous nip07CheckIntervalRef and initialNip07CheckTimeoutRef logic
+
+    // Simplified loginExtension, or replace with a dedicated nostr-login launch
+    const loginNostrLogin = useCallback(async (startScreen = 'welcome') => {
+        // You can launch specific screens of nostr-login
+        // This effectively replaces your previous "loginExtension" since nostr-login handles
+        // both NIP-07 extensions and NIP-46 connects.
+        launchNostrLoginDialog({ startScreen });
+        // The actual state update (setPublicKey, setLoginMethod) will happen in the nlAuth event listener
+    }, []);
+
 
     const loginLocal = useCallback(() => {
         setLoginMethod('local');
@@ -101,11 +108,13 @@ export const NostrProvider = ({ children }) => {
         console.log("Logged in with Local Public Key:", getPublicKey(sk));
     }, []);
 
-    const logout = useCallback(() => {
-        localStorage.removeItem('nostr_sk');
+    const handleLogout = useCallback(() => { // Renamed to avoid clash if you also use logoutNostrLogin directly
+        localStorage.removeItem('nostr_sk'); // If you store local keys
         setPrivateKey(null);
         setPublicKey(null);
         setLoginMethod(null);
+        // Also trigger nostr-login's internal logout
+        logoutNostrLogin();
         console.log("Logged out.");
     }, []);
 
@@ -125,9 +134,11 @@ export const NostrProvider = ({ children }) => {
 
         let signedEvent;
         try {
-            if (loginMethod === 'nip07') {
+            // Now, window.nostr is managed by nostr-login, so it's always the primary way
+            // to sign for 'nostr-login' method.
+            if (loginMethod === 'nostr-login') {
                 if (typeof window === 'undefined' || !window.nostr) {
-                    console.error("Cannot sign event with NIP-07: Not in browser or extension not available.");
+                    console.error("Cannot sign event with nostr-login: Not in browser or window.nostr not available.");
                     return null;
                 }
                 signedEvent = await window.nostr.signEvent(eventTemplate);
@@ -138,6 +149,7 @@ export const NostrProvider = ({ children }) => {
                 return null;
             }
 
+            // Using Promise.any for pool.publish is good
             await Promise.any(pool.publish(relays, signedEvent));
             return signedEvent;
         } catch (error) {
@@ -190,15 +202,15 @@ export const NostrProvider = ({ children }) => {
         publicKey,
         privateKey,
         loginLocal,
-        loginExtension,
-        logout,
+        loginNostrLogin, // New function to launch nostr-login dialog
+        logout: handleLogout, // Use the unified logout handler
         publishEvent,
         subscribeToEvents,
         sendGroupMessage,
         subscribeToGroupChannel,
         relays,
         setRelays,
-        isNip07Ready,
+        isNip07Ready, // Can be used to conditionally show UI, but nostr-login abstracts a lot
         loginMethod,
     };
 
