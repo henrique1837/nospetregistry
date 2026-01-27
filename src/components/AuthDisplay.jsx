@@ -1,16 +1,18 @@
 // src/components/AuthDisplay.jsx
-import React, { useState, useMemo } from 'react'; // Added useMemo for nsec encoding
+import React, { useState, useMemo } from 'react';
 import { useNostr } from '../context/NostrContext';
-import * as nip19 from 'nostr-tools/nip19'; // Import nip19 for nsecEncode
-import { 
+import * as nip19 from 'nostr-tools/nip19';
+import QRCode from 'react-qr-code'; // Import QRCode component for generating QR codes
+import {
     PowerIcon, KeyIcon, PuzzlePieceIcon,
     EyeIcon, EyeSlashIcon, ClipboardDocumentIcon, CheckIcon, // Icons for private key display
-    ExclamationTriangleIcon, LinkIcon // New icons for warnings/links
+    ExclamationTriangleIcon, LinkIcon, QrCodeIcon // New icon for QR code
 } from '@heroicons/react/24/outline';
 
 function AuthDisplay() {
     const { publicKey, privateKey, loginLocal, loginExtension, logout, isNip07Ready, loginMethod } = useNostr();
     const [showLocalPrivateKey, setShowLocalPrivateKey] = useState(false); // State to toggle private key visibility
+    const [showNsecQr, setShowNsecQr] = useState(false); // State to toggle nsec QR code visibility
     const [copiedField, setCopiedField] = useState(null); // State for copy button feedback
 
     // Encode the private key to nsec format, only for local login
@@ -30,6 +32,22 @@ function AuthDisplay() {
         navigator.clipboard.writeText(text);
         setCopiedField(field);
         setTimeout(() => setCopiedField(null), 2000);
+    };
+
+    const toggleNsecQr = () => {
+        if (!showNsecQr) {
+            // Add a strong warning before showing the private key QR
+            const confirmShow = window.confirm(
+                "WARNING: This will display your Nostr private key (nsec) in a QR code. " +
+                "Anyone who sees this can impersonate you and access your Nostr identity. " +
+                "Only show this in a private, secure environment. Do NOT share it. " +
+                "Are you absolutely sure you want to proceed?"
+            );
+            if (!confirmShow) {
+                return;
+            }
+        }
+        setShowNsecQr(!showNsecQr);
     };
 
     if (!publicKey) {
@@ -129,13 +147,39 @@ function AuthDisplay() {
                             >
                                 {copiedField === 'nsec' ? <CheckIcon className="h-5 w-5" /> : <ClipboardDocumentIcon className="h-5 w-5" />}
                             </button>
+                            {/* New: Button to toggle QR code visibility */}
+                            <button
+                                onClick={toggleNsecQr}
+                                className="p-2 bg-gray-700 hover:bg-gray-600 rounded text-white"
+                                title={showNsecQr ? "Hide QR Code" : "Show QR Code"}
+                                disabled={!nsec} // Disable if nsec isn't available
+                            >
+                                {showNsecQr ? <EyeSlashIcon className="h-5 w-5" /> : <QrCodeIcon className="h-5 w-5" />}
+                            </button>
                         </div>
                         <p className="text-xs text-gray-500 mt-2">
                             If you share this key, others can impersonate you and access your data.
                         </p>
                     </div>
 
-                    <h5 className="text-md font-bold text-red-300 mb-2 flex items-center gap-2">
+                    {/* New: QR Code Display Area */}
+                    {showNsecQr && nsec && (
+                        <div className="mt-6 p-4 bg-white rounded-lg flex justify-center shadow-lg border border-gray-300">
+                            <div className="p-2 border-2 border-gray-900 rounded"> {/* Added border around QR for better visibility */}
+                                <QRCode
+                                    value={nsec}
+                                    size={256}
+                                    level="H" // High error correction level
+                                    fgColor="#1f2937" // Dark gray
+                                    bgColor="#ffffff" // White
+                                    className="max-w-full h-auto"
+                                />
+                            </div>
+                        </div>
+                    )}
+
+
+                    <h5 className="text-md font-bold text-red-300 mb-2 flex items-center gap-2 mt-8">
                         <LinkIcon className="h-5 w-5 text-red-400"/>
                         Recommended Nostr Clients to Save Your Key:
                     </h5>
