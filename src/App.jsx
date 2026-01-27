@@ -6,6 +6,8 @@ import { HashRouter as Router, Routes, Route } from 'react-router-dom'; // Impor
 import GroupChat from './components/GroupChat';
 import PetLogbookPage from './pages/PetLogbookPage'; // New import
 import HomePage from './pages/HomePage';
+import RegistryPage from './pages/RegistryPage';
+
 import Navbar from './components/Navbar'; // Import the Navbar component
 
 
@@ -18,6 +20,8 @@ function App() {
               <h1 className="text-4xl font-bold text-white mb-8">Nostr Pet Registry App</h1>
             <Routes>
                     <Route path="/" element={<HomePage />} />
+                    <Route path="/my-pets" element={<RegistryPage />} />
+
                     <Route path="/pet/:petId" element={<PetLogbookPage />} />
                     <Route path="/group-channel" element={<GroupChat channelId={GROUP_CHAT_ID} />} />
                 </Routes>

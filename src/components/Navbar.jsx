@@ -2,7 +2,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useNostr, APP_NAME } from '../context/NostrContext';
-import { HomeIcon, ChatBubbleLeftRightIcon, ShieldCheckIcon } from '@heroicons/react/24/solid'; // Using solid icons for navbar
+import { HomeIcon, ChatBubbleLeftRightIcon, ShieldCheckIcon,HeartIcon } from '@heroicons/react/24/solid'; // Using solid icons for navbar
 
 function Navbar() {
     const { publicKey } = useNostr();
@@ -20,6 +20,9 @@ function Navbar() {
                 <div className="flex space-x-6">
                     <Link to="/" className="text-gray-300 hover:text-white transition-colors text-lg flex items-center gap-1">
                         <HomeIcon className="h-5 w-5" /> Home
+                    </Link>
+                    <Link to="/my-pets" className="text-gray-300 hover:text-white transition-colors text-lg flex items-center gap-1">
+                        <HeartIcon className="h-5 w-5" /> Pets
                     </Link>
                     <Link to="/group-channel" className="text-gray-300 hover:text-white transition-colors text-lg flex items-center gap-1">
                         <ChatBubbleLeftRightIcon className="h-5 w-5" /> Group Chat

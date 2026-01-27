@@ -16,13 +16,6 @@ function HomePage() {
         <div className="bg-gray-900 text-gray-100 p-8 rounded-lg w-full max-w-5xl mx-auto my-8"> {/* Added mx-auto my-8 for centering and vertical spacing */}
             <AuthDisplay />
             <NostrConnectInfo publicKey={publicKey}/>
-            {publicKey && (
-                <>
-                    <PetRegistrationForm />
-                    <PetList /> {/* My pets list with links */}
-                </>
-            )}
-            <AllPetsList /> {/* All pets list with links (visible even if not logged in) */}
         </div>
     );
 }
