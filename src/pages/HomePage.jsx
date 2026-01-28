@@ -5,9 +5,7 @@ import { usePageTitle } from '../hooks/usePageTitle';
 import { useNostr } from '../context/NostrContext';
 
 import AuthDisplay from '../components/AuthDisplay';
-import PetRegistrationForm from '../components/PetRegistrationForm';
-import PetList from '../components/PetList';
-import AllPetsList from '../components/AllPetsList';
+import AboutNosPetRegistry from '../components/AboutNosPetRegistry';
 import NostrConnectInfo from '../components/NostrConnectInfo';
 
 // This is the main content of your home page
@@ -24,8 +22,13 @@ function HomePage() {
                 <meta property="og:description" content="Your Decentralized Pet Logbook" />
                 {/* You can add more meta tags like og:image, twitter:card, etc. */}
             </Helmet>
-            <AuthDisplay />
-            <NostrConnectInfo publicKey={publicKey}/>
+            <AboutNosPetRegistry /> 
+            {/* Authentication and Connection Info */}
+            <section className="bg-gray-800 p-6 rounded-lg shadow-lg mb-8 text-center">
+                <h2 className="text-3xl font-bold text-blue-400 mb-4">Get Started</h2>
+                <AuthDisplay />
+                <NostrConnectInfo publicKey={publicKey}/>
+            </section>
         </div>
     );
 }
