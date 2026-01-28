@@ -58,7 +58,6 @@ export const NostrProvider = ({ children }) => {
                         });
                     }
                 }  else if(e.detail.type === 'signup'){
-                    alert(e.detail.localNsec)
                     const pubkey = e.detail.pubkey;
                     const nsec = e.detail.localNsec;
                     setPublicKey(pubkey);
