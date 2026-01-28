@@ -15,12 +15,8 @@ function RegistryPage() {
     // State to manage the active tab: 'myPets' or 'allPets'
     const [activeTab, setActiveTab] = useState('myPets'); // Default to 'myPets'
     usePageTitle('NosPetRegistry - Register Your Pet')
-    const pageTitle = `${petProfile.name}'s Logbook - Nostr Pet Care`;
-    const pageDescription = `Health logbook for ${petProfile.name}, a ${petProfile.race || 'pet'} born on ${petProfile.birthday ? new Date(petProfile.birthday).toLocaleDateString() : 'an unknown date'}. View vaccines, dewormings, and more on Nostr Pet Care.`;
-    const ogTitle = `${petProfile.name}'s Health Logbook on Nostr Pet Care`;
-    const ogDescription = `View ${petProfile.name}'s comprehensive health records, including vaccines, dewormings, and medical history. Powered by Nostr.`;
-    const petImage = petProfile.image || null; // Fallback image
-    const currentUrl = `https://nospetregistry.vercel.app/#/pet/${petProfile.id}`; // IMPORTANT: Adjust to your actual URL structure
+    const imageUrl = null; 
+    const currentUrl = `https://nospetregistry.vercel.app/#/my-pets`; // IMPORTANT: Adjust to your actual URL structure
     return (
         <div className="bg-gray-900 text-gray-100 p-8 rounded-lg w-full max-w-5xl mx-auto my-8 border border-gray-800"> {/* Added border to main container */}
             <Helmet>
@@ -46,7 +42,7 @@ function RegistryPage() {
                 <meta name="twitter:site" content="@nos_pet1273" /> {/* Optional: Your Twitter handle */}
                 <meta name="twitter:creator" content="@nos_pet1273" /> {/* Optional: Creator's Twitter handle */}
                 <meta name="twitter:title" content="NosPetRegistry: Decentralized Pet Registration" />
-                <meta name="twitter:description" content="Register your pets and view the community's pet registry powered by nostr." />
+                <meta name="twitter:description" content="Register your pets and view the community's pet registry powered by Nostr." />
                 <meta name="twitter:image" content={imageUrl} />
                 <meta name="twitter:image:alt" content="A diverse group of happy pets with the NosPetRegistry logo." /> {/* Alt text for accessibility */}
 

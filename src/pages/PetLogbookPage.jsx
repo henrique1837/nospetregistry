@@ -179,7 +179,12 @@ function PetLogbookPage() {
     // Determine if the current user is the pet owner
     const isOwner = publicKey && petProfile.ownerPubKey === publicKey;
     usePageTitle(`${petProfile.name}'s Logbook - Nostr Pet Care`)
-
+    const pageTitle = `${petProfile.name}'s Logbook - Nostr Pet Care`;
+    const pageDescription = `Health logbook for ${petProfile.name}, a ${petProfile.race || 'pet'} born on ${petProfile.birthday ? new Date(petProfile.birthday).toLocaleDateString() : 'an unknown date'}. View vaccines, dewormings, and more on Nostr Pet Care.`;
+    const ogTitle = `${petProfile.name}'s Health Logbook on Nostr Pet Care`;
+    const ogDescription = `View ${petProfile.name}'s comprehensive health records, including vaccines, dewormings, and medical history. Powered by Nostr.`;
+    const petImage = petProfile.image || null; // Fallback image
+    const currentUrl = `https://yourwebsite.com/pets/${petProfile.id}/logbook`; // IMPORTANT: Adjust to your actual URL structure
     return (
         <div className="min-h-screen w-full bg-gray-950 flex flex-col items-center py-8 px-4"> {/* Main page dark background */}
             <Helmet>
