@@ -191,7 +191,7 @@ function PetLogbookPage() {
                 {/* Add other meta tags as needed */}
             </Helmet>
             <div className="bg-gray-900 p-8 rounded-lg border border-gray-700 shadow-xl w-full max-w-3xl text-gray-100"> {/* Dark card for content */}
-                <Link to="/" className="text-purple-400 hover:text-purple-300 hover:underline mb-6 block w-fit text-sm flex items-center gap-1">
+                <Link to="/my-pets" className="text-purple-400 hover:text-purple-300 hover:underline mb-6 block w-fit text-sm flex items-center gap-1">
                     <DocumentTextIcon className="h-4 w-4" /> Back to All Pets
                 </Link>
 
