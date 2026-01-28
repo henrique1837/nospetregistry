@@ -183,12 +183,36 @@ function PetLogbookPage() {
     return (
         <div className="min-h-screen w-full bg-gray-950 flex flex-col items-center py-8 px-4"> {/* Main page dark background */}
             <Helmet>
-                <title>{petProfile.name}'s Logbook - Nostr Pet Care</title>
-                <meta name="description" content={`Health logbook for ${petProfile.name}, a ${petProfile.race} born on ${petProfile.birthday}. View vaccines, dewormings, and more.`} />
-                <meta property="og:title" content={`${petProfile.name}'s Logbook`} />
-                <meta property="og:description" content={`View ${petProfile.name}'s health records on Nostr Pet Care.`} />
-                {petProfile.image && <meta property="og:image" content={petProfile.image} />}
-                {/* Add other meta tags as needed */}
+                {/* Standard Meta Tags */}
+                <title>{pageTitle}</title>
+                <meta name="description" content={pageDescription} />
+                <meta name="keywords" content={`Nostr, pet care, pet health, ${petProfile.name}, ${petProfile.race}, logbook, vaccines, deworming`} />
+                <link rel="canonical" href={currentUrl} />
+
+                {/* Open Graph Tags */}
+                <meta property="og:url" content={currentUrl} />
+                <meta property="og:type" content="article" /> {/* Changed to 'article' or 'profile' for specific content */}
+                <meta property="og:title" content={ogTitle} />
+                <meta property="og:description" content={ogDescription} />
+                <meta property="og:image" content={petImage} />
+                <meta property="og:image:width" content="1200" /> {/* Recommended for large image previews */}
+                <meta property="og:image:height" content="630" /> {/* Recommended for large image previews */}
+                <meta property="og:locale" content="en_US" />
+                <meta property="og:site_name" content="NosPetRegistry" />
+
+                {/* Twitter Card Tags */}
+                <meta name="twitter:card" content="summary_large_image" />
+                <meta name="twitter:site" content="@nos_pet1273" /> {/* Your project's Twitter handle */}
+                <meta name="twitter:creator" content="@nos_pet1273" /> {/* Or the pet owner's handle if available */}
+                <meta name="twitter:title" content={ogTitle} />
+                <meta name="twitter:description" content={ogDescription} />
+                <meta name="twitter:image" content={petImage} />
+                <meta name="twitter:image:alt" content={`Profile image of ${petProfile.name}, a ${petProfile.race}`} />
+
+                {/* You can also add more specific meta tags related to pet health if you have relevant data, e.g.: */}
+                {/* <meta property="pet:species" content={petProfile.species} /> */}
+                {/* <meta property="pet:gender" content={petProfile.gender} /> */}
+                {/* <meta property="pet:breed" content={petProfile.race} /> */}
             </Helmet>
             <div className="bg-gray-900 p-8 rounded-lg border border-gray-700 shadow-xl w-full max-w-3xl text-gray-100"> {/* Dark card for content */}
                 <Link to="/my-pets" className="text-purple-400 hover:text-purple-300 hover:underline mb-6 block w-fit text-sm flex items-center gap-1">
