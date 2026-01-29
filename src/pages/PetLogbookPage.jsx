@@ -233,23 +233,23 @@ function PetLogbookPage() {
                 <StatusMessage message={statusMessage} />
 
                 {/* Tabs for All Records, Vaccines, and Dewormings */}
-                <div className="flex justify-center mb-8">
+                <div className="flex flex-wrap justify-center gap-2 mb-8"> 
                     <button
-                        className={`py-2 px-4 rounded-l-lg text-lg font-semibold transition duration-300 ease-in-out flex items-center gap-2
+                        className={`flex-1 min-w-[120px] sm:flex-none py-2 px-4 rounded-lg text-lg font-semibold transition duration-300 ease-in-out flex items-center justify-center gap-2
                             ${activeTab === 'all' ? 'bg-purple-600 text-white shadow-lg' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}
                         onClick={() => setActiveTab('all')}
                     >
-                        <ClipboardDocumentListIcon className="h-5 w-5" /> All Records
+                        <ClipboardDocumentListIcon className="h-5 w-5" /> <span className="hidden sm:inline">All </span>Records
                     </button>
                     <button
-                        className={`py-2 px-4 ${isOwner ? '' : 'rounded-r-lg'} text-lg font-semibold transition duration-300 ease-in-out flex items-center gap-2
+                        className={`flex-1 min-w-[120px] sm:flex-none py-2 px-4 rounded-lg text-lg font-semibold transition duration-300 ease-in-out flex items-center justify-center gap-2
                             ${activeTab === 'vaccines' ? 'bg-purple-600 text-white shadow-lg' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}
                         onClick={() => setActiveTab('vaccines')}
                     >
                         <DocumentTextIcon className="h-5 w-5" /> Vaccines
                     </button>
                     <button
-                        className={`py-2 px-4 rounded-r-lg text-lg font-semibold transition duration-300 ease-in-out flex items-center gap-2
+                        className={`flex-1 min-w-[120px] sm:flex-none py-2 px-4 rounded-lg text-lg font-semibold transition duration-300 ease-in-out flex items-center justify-center gap-2
                             ${activeTab === 'dewormings' ? 'bg-purple-600 text-white shadow-lg' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}
                         onClick={() => setActiveTab('dewormings')}
                     >
