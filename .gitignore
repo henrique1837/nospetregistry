@@ -149,3 +149,7 @@ vite.config.ts.timestamp-*
 *.sln
 *.sw?
 .vercel
+
+# /public/.well-known
+
+/public/.well-known

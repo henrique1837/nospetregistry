@@ -1,11 +1,20 @@
-// src/pages/PetLogbookPage.jsx
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react'; // Added useMemo
 import { useParams, Link } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async'; 
+import { Helmet } from 'react-helmet-async';
 import { usePageTitle } from '../hooks/usePageTitle';
 
 import { useNostr, APP_NAME, GROUP_CHAT_ID } from '../context/NostrContext';
-import { DocumentTextIcon, CalendarDaysIcon, PlusCircleIcon } from '@heroicons/react/24/outline'; // Adding icons
+import {
+    DocumentTextIcon, // For "All Records" or "Vaccines"
+    CalendarDaysIcon, // For "Dewormings"
+    ClipboardDocumentListIcon // New icon for "All Records"
+} from '@heroicons/react/24/outline';
+
+// Import existing components
+import PetProfileHeader from '../components/PetProfileHeader';
+import StatusMessage from '../components/StatusMessage';
+import LogEntryForm from '../components/LogEntryForm';
+import LogEntryList from '../components/LogEntryList';
 
 const KIND_LOGBOOK_ENTRY = 42;
 
@@ -16,15 +25,19 @@ function PetLogbookPage() {
     const [vaccines, setVaccines] = useState([]);
     const [dewormings, setDewormings] = useState([]);
 
+    // State for vaccine form
     const [vaccineDate, setVaccineDate] = useState('');
     const [vaccineType, setVaccineType] = useState('');
     const [vaccineNotes, setVaccineNotes] = useState('');
 
+    // State for deworming form
     const [dewormingDate, setDewormingDate] = useState('');
     const [dewormingType, setDewormingType] = useState('');
     const [dewormingNotes, setDewormingNotes] = useState('');
 
-    const [statusMessage, setStatusMessage] = useState(''); // New state for status/alerts
+    const [statusMessage, setStatusMessage] = useState('');
+    const [activeTab, setActiveTab] = useState('all'); // Default to 'all' records tab
+
     // --- Fetch Pet Profile ---
     useEffect(() => {
         if (!petId) return;
@@ -32,19 +45,16 @@ function PetLogbookPage() {
         const filter = {
             kinds: [KIND_LOGBOOK_ENTRY],
             ids: [petId],
-            '#d': [APP_NAME], // Pet profile events also have this 'd' tag
+            '#d': [APP_NAME],
             '#e': [GROUP_CHAT_ID]
         };
 
         console.log("Fetching pet profile for ID:", petId);
 
-        // This subscription should ideally be for KIND_PET_PROFILE (e.g., 42) not KIND_LOGBOOK_ENTRY
-        // Assuming KIND_LOGBOOK_ENTRY is also 42 from PetList, so this is correct.
         subscribeToEvents(filter, (event) => {
             try {
                 const data = JSON.parse(event.content);
-                // Ensure ownerPubKey is set, which is the event's pubkey
-                setPetProfile({ ...data, id: event.id, ownerPubKey: event.pubkey }); 
+                setPetProfile({ ...data, id: event.id, ownerPubKey: event.pubkey });
             } catch (e) {
                 console.error("Error parsing pet profile content for ID:", petId, e);
             }
@@ -91,6 +101,13 @@ function PetLogbookPage() {
 
         return;
     }, [petId, subscribeToEvents]);
+
+    // --- Memoized combined log entries for "All Records" tab ---
+    const allLogEntries = useMemo(() => {
+        const combined = [...vaccines.map(v => ({ ...v, category: 'vaccine' })),
+                          ...dewormings.map(d => ({ ...d, category: 'deworming' }))];
+        return combined.sort((a, b) => new Date(a.date) - new Date(b.date));
+    }, [vaccines, dewormings]);
 
     // --- Handlers for Adding Logbook Entries ---
     const handleAddVaccine = useCallback(async () => {
@@ -163,7 +180,7 @@ function PetLogbookPage() {
         usePageTitle('Loading Pet Logbook...')
 
         return (
-            <div className="min-h-screen bg-gray-950 flex flex-col items-center py-8 px-4 text-gray-300"> {/* Dark background, light text */}
+            <div className="min-h-screen bg-gray-950 flex flex-col items-center py-8 px-4 text-gray-300">
                 <Helmet>
                     <title>Loading Pet Logbook...</title>
                     <meta name="description" content="Loading pet's health logbook details." />
@@ -176,147 +193,110 @@ function PetLogbookPage() {
         );
     }
 
-    // Determine if the current user is the pet owner
     const isOwner = publicKey && petProfile.ownerPubKey === publicKey;
     usePageTitle(`${petProfile.name}'s Logbook - Nostr Pet Care`)
     const pageTitle = `${petProfile.name}'s Logbook - Nostr Pet Care`;
     const pageDescription = `Health logbook for ${petProfile.name}, a ${petProfile.race || 'pet'} born on ${petProfile.birthday ? new Date(petProfile.birthday).toLocaleDateString() : 'an unknown date'}. View vaccines, dewormings, and more on Nostr Pet Care.`;
     const ogTitle = `${petProfile.name}'s Health Logbook on Nostr Pet Care`;
     const ogDescription = `View ${petProfile.name}'s comprehensive health records, including vaccines, dewormings, and medical history. Powered by Nostr.`;
-    const petImage = petProfile.image || null; // Fallback image
-    const currentUrl = `https://yourwebsite.com/pets/${petProfile.id}/logbook`; // IMPORTANT: Adjust to your actual URL structure
+    const petImage = petProfile.image || null;
+    const currentUrl = `https://nospetregistry.vercel.app/#/pet/${petProfile.id}`;
+
     return (
-        <div className="min-h-screen w-full bg-gray-950 flex flex-col items-center py-8 px-4"> {/* Main page dark background */}
+        <div className="min-h-screen w-full bg-gray-950 flex flex-col items-center py-8 px-4">
             <Helmet>
-                {/* Standard Meta Tags */}
                 <title>{pageTitle}</title>
                 <meta name="description" content={pageDescription} />
                 <meta name="keywords" content={`Nostr, pet care, pet health, ${petProfile.name}, ${petProfile.race}, logbook, vaccines, deworming`} />
                 <link rel="canonical" href={currentUrl} />
-
-                {/* Open Graph Tags */}
                 <meta property="og:url" content={currentUrl} />
-                <meta property="og:type" content="article" /> {/* Changed to 'article' or 'profile' for specific content */}
+                <meta property="og:type" content="article" />
                 <meta property="og:title" content={ogTitle} />
                 <meta property="og:description" content={ogDescription} />
                 <meta property="og:image" content={petImage} />
-                <meta property="og:image:width" content="1200" /> {/* Recommended for large image previews */}
-                <meta property="og:image:height" content="630" /> {/* Recommended for large image previews */}
+                <meta property="og:image:width" content="1200" />
+                <meta property="og:image:height" content="630" />
                 <meta property="og:locale" content="en_US" />
                 <meta property="og:site_name" content="NosPetRegistry" />
-
-                {/* Twitter Card Tags */}
                 <meta name="twitter:card" content="summary_large_image" />
-                <meta name="twitter:site" content="@nos_pet1273" /> {/* Your project's Twitter handle */}
-                <meta name="twitter:creator" content="@nos_pet1273" /> {/* Or the pet owner's handle if available */}
+                <meta name="twitter:site" content="@nos_pet1273" />
+                <meta name="twitter:creator" content="@nos_pet1273" />
                 <meta name="twitter:title" content={ogTitle} />
                 <meta name="twitter:description" content={ogDescription} />
                 <meta name="twitter:image" content={petImage} />
                 <meta name="twitter:image:alt" content={`Profile image of ${petProfile.name}, a ${petProfile.race}`} />
-
-                {/* You can also add more specific meta tags related to pet health if you have relevant data, e.g.: */}
-                {/* <meta property="pet:species" content={petProfile.species} /> */}
-                {/* <meta property="pet:gender" content={petProfile.gender} /> */}
-                {/* <meta property="pet:breed" content={petProfile.race} /> */}
             </Helmet>
-            <div className="bg-gray-900 p-8 rounded-lg border border-gray-700 shadow-xl w-full max-w-3xl text-gray-100"> {/* Dark card for content */}
-                <Link to="/my-pets" className="text-purple-400 hover:text-purple-300 hover:underline mb-6 block w-fit text-sm flex items-center gap-1">
-                    <DocumentTextIcon className="h-4 w-4" /> Back to All Pets
-                </Link>
 
-                <h1 className="text-3xl font-bold text-white mb-6 border-b border-gray-700 pb-4">Logbook for <span className="text-indigo-400">{petProfile.name}</span></h1>
+            <div className="bg-gray-900 p-8 rounded-lg border border-gray-700 shadow-xl w-full max-w-3xl text-gray-100">
+                <PetProfileHeader petProfile={petProfile} />
 
-                {/* Pet Profile Display */}
-                <div className="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-6 mb-10 p-6 bg-gray-800 rounded-lg border border-gray-700">
-                    {petProfile.image && (
-                        <img src={petProfile.image} alt={petProfile.name} className="w-64 h-64 object-cover rounded-full shadow-lg border-2 border-purple-500 flex-shrink-0" /> 
-                    )}
-                    {/* This div will now be centered */}
-                    <div className="flex flex-col justify-center items-center md:items-start text-center md:text-left flex-grow"> {/* Added flex, justify-center, items-center (default), and md:items-start, text-center, md:text-left, flex-grow */}
-                        <h3 className="text-2xl font-bold text-white mb-2">{petProfile.name}</h3>
-                        <p className="text-gray-300 mb-1"><span className="font-semibold text-purple-300">Breed:</span> {petProfile.race}</p>
-                        <p className="text-gray-300 mb-1"><span className="font-semibold text-purple-300">Birthday:</span> {petProfile.birthday}</p>
-                        <small className="text-gray-400 block mt-2">Owner: {petProfile.ownerPubKey ? petProfile.ownerPubKey.substring(0, 6) + '...' : 'Unknown'}</small>
-                    </div>
+                <StatusMessage message={statusMessage} />
+
+                {/* Tabs for All Records, Vaccines, and Dewormings */}
+                <div className="flex justify-center mb-8">
+                    <button
+                        className={`py-2 px-4 rounded-l-lg text-lg font-semibold transition duration-300 ease-in-out flex items-center gap-2
+                            ${activeTab === 'all' ? 'bg-purple-600 text-white shadow-lg' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}
+                        onClick={() => setActiveTab('all')}
+                    >
+                        <ClipboardDocumentListIcon className="h-5 w-5" /> All Records
+                    </button>
+                    <button
+                        className={`py-2 px-4 ${isOwner ? '' : 'rounded-r-lg'} text-lg font-semibold transition duration-300 ease-in-out flex items-center gap-2
+                            ${activeTab === 'vaccines' ? 'bg-purple-600 text-white shadow-lg' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}
+                        onClick={() => setActiveTab('vaccines')}
+                    >
+                        <DocumentTextIcon className="h-5 w-5" /> Vaccines
+                    </button>
+                    <button
+                        className={`py-2 px-4 rounded-r-lg text-lg font-semibold transition duration-300 ease-in-out flex items-center gap-2
+                            ${activeTab === 'dewormings' ? 'bg-purple-600 text-white shadow-lg' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}
+                        onClick={() => setActiveTab('dewormings')}
+                    >
+                        <CalendarDaysIcon className="h-5 w-5" /> Dewormings
+                    </button>
                 </div>
 
-                {statusMessage && (
-                    <p className={`text-sm mb-6 p-3 rounded-lg ${statusMessage.includes('Failed') ? 'bg-red-900/50 text-red-300 border border-red-800' : 'bg-green-900/50 text-green-300 border border-green-800'}`}>
-                        {statusMessage}
-                    </p>
-                )}
-                
-                {/* Add Vaccine Form */}
-                {isOwner && (
-                    <div className="mb-10 bg-gray-800 p-6 rounded-lg shadow-inner border border-gray-700">
-                        <h4 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
-                            <PlusCircleIcon className="h-5 w-5 text-green-400" /> Add Vaccine Record
-                        </h4>
-                        <input type="date" value={vaccineDate} onChange={(e) => setVaccineDate(e.target.value)}
-                            className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 mb-3" placeholder="Date" />
-                        <input type="text" value={vaccineType} onChange={(e) => setVaccineType(e.target.value)}
-                            className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 mb-3" placeholder="Vaccine Type (e.g., Rabies)" />
-                        <textarea value={vaccineNotes} onChange={(e) => setVaccineNotes(e.target.value)}
-                                className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 mb-4" placeholder="Notes (optional)"></textarea>
-                        <button onClick={handleAddVaccine}
-                                className="bg-green-600 hover:bg-green-700 text-white font-bold text-lg py-3 px-5 rounded-lg w-full transition duration-300 ease-in-out">
-                            Add Vaccine
-                        </button>
-                    </div>
+                {/* Tab Content */}
+                {activeTab === 'all' && (
+                    <LogEntryList type="all" entries={allLogEntries} />
                 )}
 
-                {/* List Vaccines */}
-                <div className="mb-10 border-t border-gray-700 pt-8">
-                    <h4 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
-                        <CalendarDaysIcon className="h-5 w-5 text-blue-400" /> Vaccines:
-                    </h4>
-                    {vaccines.length === 0 ? (
-                        <p className="text-gray-400 italic">No vaccines recorded.</p>
-                    ) : (
-                        vaccines.map((v) => (
-                            <div key={v.id} className="bg-gray-800 p-4 rounded-md mb-3 text-sm border border-gray-700">
-                                <strong className="text-purple-300 block mb-1">{v.date}: {v.type}</strong>
-                                {v.notes && <p className="text-gray-300 text-base">Notes: {v.notes}</p>}
-                            </div>
-                        ))
-                    )}
-                </div>
-
-                {/* Add Deworming Form */}
-                {isOwner && (
-                    <div className="mb-10 bg-gray-800 p-6 rounded-lg shadow-inner border border-gray-700">
-                        <h4 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
-                            <PlusCircleIcon className="h-5 w-5 text-yellow-400" /> Add Deworming Record
-                        </h4>
-                        <input type="date" value={dewormingDate} onChange={(e) => setDewormingDate(e.target.value)}
-                            className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 mb-3" placeholder="Date" />
-                        <input type="text" value={dewormingType} onChange={(e) => setDewormingType(e.target.value)}
-                            className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 mb-3" placeholder="Deworming Type (e.g., Fenbendazole)" />
-                        <textarea value={dewormingNotes} onChange={(e) => setDewormingNotes(e.target.value)}
-                                className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 mb-4" placeholder="Notes (optional)"></textarea>
-                        <button onClick={handleAddDeworming}
-                                className="bg-yellow-600 hover:bg-yellow-700 text-white font-bold text-lg py-3 px-5 rounded-lg w-full transition duration-300 ease-in-out">
-                            Add Deworming
-                        </button>
-                    </div>
+                {activeTab === 'vaccines' && (
+                    <>
+                        {isOwner && ( // Conditional rendering for owner
+                            <LogEntryForm
+                                type="vaccine"
+                                date={vaccineDate}
+                                setDate={setVaccineDate}
+                                entryType={vaccineType}
+                                setEntryType={setVaccineType}
+                                notes={vaccineNotes}
+                                setNotes={setVaccineNotes}
+                                onAddEntry={handleAddVaccine}
+                            />
+                        )}
+                        <LogEntryList type="vaccine" entries={vaccines} />
+                    </>
                 )}
 
-                {/* List Dewormings */}
-                <div>
-                    <h4 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
-                        <CalendarDaysIcon className="h-5 w-5 text-orange-400" /> Dewormings:
-                    </h4>
-                    {dewormings.length === 0 ? (
-                        <p className="text-gray-400 italic">No dewormings recorded.</p>
-                    ) : (
-                        dewormings.map((d) => (
-                            <div key={d.id} className="bg-gray-800 p-4 rounded-md mb-3 text-sm border border-gray-700">
-                                <strong className="text-purple-300 block mb-1">{d.date}: {d.type}</strong>
-                                {d.notes && <p className="text-gray-300 text-base">Notes: {d.notes}</p>}
-                            </div>
-                        ))
-                    )}
-                </div>
+                {activeTab === 'dewormings' && (
+                    <>
+                        {isOwner && ( // Conditional rendering for owner
+                            <LogEntryForm
+                                type="deworming"
+                                date={dewormingDate}
+                                setDate={setDewormingDate}
+                                entryType={dewormingType}
+                                setEntryType={setDewormingType}
+                                notes={dewormingNotes}
+                                setNotes={setDewormingNotes}
+                                onAddEntry={handleAddDeworming}
+                            />
+                        )}
+                        <LogEntryList type="deworming" entries={dewormings} />
+                    </>
+                )}
             </div>
         </div>
     );
