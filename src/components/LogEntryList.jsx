@@ -17,7 +17,15 @@ function LogEntryList({ type, entries }) {
                 entries.map((entry) => (
                     <div key={entry.id} className="bg-gray-800 p-4 rounded-md mb-3 text-sm border border-gray-700">
                         <strong className="text-purple-300 block mb-1">{entry.date}: {entry.type}</strong>
-                        {entry.notes && <p className="text-gray-300 text-base">Notes: {entry.notes}</p>}
+                        {
+                            entry.notes &&
+                            <>
+                            <p className="text-gray-300 text-base">Notes</p>
+                            <div style={{ whiteSpace: 'pre-wrap' }}>
+                                {entry.notes}
+                            </div>
+                            </>
+                        }
                     </div>
                 ))
             )}
